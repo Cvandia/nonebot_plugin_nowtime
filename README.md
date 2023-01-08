@@ -27,7 +27,7 @@ _⭐基于Nonebot2的一款整点报时的插件⭐_
 在项目目录文件下运行
 
 ```
-nb plugin install nonebot-plugin-nowtime
+nb plugin install nonebot_plugin_nowtime
 ```
 </details>
 
@@ -35,7 +35,7 @@ nb plugin install nonebot-plugin-nowtime
 <summary>pip安装</summary>
 
 ```
-pip install nonebot_plugin_nowtime
+pip install nonebot-plugin-nowtime
 ```
 
 </details>
