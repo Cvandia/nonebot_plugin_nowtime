@@ -26,16 +26,17 @@ _⭐基于Nonebot2的一款整点报时的插件⭐_
 
 在项目目录文件下运行
 
-
+'''
 nb plugin install nonebot-plugin-nowtime
- 
+'''
 </details>
 
 <details>
 <summary>pip安装</summary>
 
-
+'''
 pip install nonebot_plugin_nowtime
+'''
 
 </details>
 
@@ -54,9 +55,9 @@ pip install nonebot_plugin_nowtime
 |查看整点报时列表|否|群聊|查看已开启整点报时的群聊|
 
 如：
-
+'''
     /开启整点报时
-    
+'''    
 **注意**
 
 默认情况下, 您应该在指令前加上命令前缀, 通常是 /
