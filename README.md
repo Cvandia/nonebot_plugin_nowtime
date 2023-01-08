@@ -43,7 +43,7 @@ pip install nonebot-plugin-nowtime
 ## ⚙️ 配置
 
 无需额外配置
-
+如果想要手动添加整点报时群聊，在项目目录下的```config\nowtime.json```中添加群号
 
 ## ⭐ 使用
 
