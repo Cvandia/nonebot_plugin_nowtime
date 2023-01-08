@@ -1,4 +1,4 @@
-##<div align="center">
+<div align="center">
 
 <a href="https://v2.nonebot.dev/store"><img src="https://img.zcool.cn/community/014c9a55420cdc0000019ae952d851.jpg@1280w_1l_2o_100sh.jpg" width="180" height="180" alt="NoneBotPluginLogo"></a>
 
@@ -26,12 +26,14 @@ _⭐基于Nonebot2的一款整点报时的插件⭐_
 
 在项目目录文件下运行
 
+
 nb plugin install nonebot-plugin-nowtime
  
 </details>
 
 <details>
 <summary>pip安装</summary>
+
 
 pip install nonebot_plugin_nowtime
 
@@ -52,6 +54,7 @@ pip install nonebot_plugin_nowtime
 |查看整点报时列表|否|群聊|查看已开启整点报时的群聊|
 
 如：
+
     /开启整点报时
     
 **注意**
