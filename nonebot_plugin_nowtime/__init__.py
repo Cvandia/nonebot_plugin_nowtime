@@ -1,7 +1,8 @@
 from nonebot.plugin import on_regex
+from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.permission import SUPERUSER
 from nonebot.params import Matcher, RegexGroup
-from nonebot import require,get_bot
+from nonebot import require,get_bot,get_driver
 from nonebot.adapters.onebot.v11 import (
     Bot,
     MessageEvent,
@@ -13,6 +14,7 @@ from nonebot.log import logger
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 from datetime import datetime
+from .config import Config
 import asyncio
 import aiofiles
 import os
@@ -39,8 +41,8 @@ except Exception:
 
 
 time_now = on_regex(r"(现在|当前|北京)时间", block=True, priority=5)
-trun_on_nowtime = on_regex(r"^(开启|关闭)整点报时([0-9]*)$", priority=99, block=True, permission=SUPERUSER)
-list_matcher = on_regex(r"^查看整点报时列表$", priority=99, permission=SUPERUSER)
+trun_on_nowtime = on_regex(r"^(开启|关闭)整点报时([0-9]*)$", priority=99, block=True, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+list_matcher = on_regex(r"^查看整点报时列表$", priority=99, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 
 
 @time_now.handle()
@@ -96,26 +98,31 @@ async def _(
             await f.write(json.dumps(CONFIG, ensure_ascii=False, indent=4))
     await matcher.finish(f"已成功{mode}{group_id}的整点报时")
 
+#读取配置的开始和结束时间
+star_time = Config.parse_obj(get_driver().config.dict()).start_time
+end_time = Config.parse_obj(get_driver().config.dict()).end_time
+
 #发送报时
 async def post_scheduler():
     bot: Bot = get_bot()
-    delay = 2 * 0.5    
-    for group_id in CONFIG["opened_groups"]:
-        try:
+    delay = 2 * 0.5
+    if datetime.now().hour in range(star_time,end_time):   
+        for group_id in CONFIG["opened_groups"]:
+            try:
             #整点语音
-            url = 'https://v.api.aa1.cn/api/api-baoshi/data/baoshi/'
-            url = url +str(datetime.now().hour)+ '.mp3'
-            record = MessageSegment.record(url)
-            await bot.send_group_msg(group_id=int(group_id), message=record)
-        except ActionFailed as e:
-            logger.warning(f'{repr(e)}')
-        await asyncio.sleep(delay)
-        try:
-            msg = await get_word_result()
-            await bot.send_group_msg(group_id=int(group_id), message= msg) 
-        except ActionFailed as e:
-            logger.warning(f"定时发送整点报时到 {group_id} 失败，可能是风控或机器人不在该群聊 {repr(e)}")
-        await asyncio.sleep(delay)
+                url = 'https://v.api.aa1.cn/api/api-baoshi/data/baoshi/'
+                url = url +str(datetime.now().hour)+ '.mp3'
+                record = MessageSegment.record(url)
+                await bot.send_group_msg(group_id=int(group_id), message=record)
+            except ActionFailed as e:
+                logger.warning(f'{repr(e)}')
+            await asyncio.sleep(delay)
+            try:
+                msg = await get_word_result()
+                await bot.send_group_msg(group_id=int(group_id), message= msg) 
+            except ActionFailed as e:
+                logger.warning(f"定时发送整点报时到 {group_id} 失败，可能是风控或机器人不在该群聊 {repr(e)}")
+            await asyncio.sleep(delay)
 
 
 
