@@ -21,8 +21,8 @@ _⭐基于Nonebot2的一款整点报时的插件⭐_
 
 ## ⭐ 介绍
 
-让机器人为你整点报时吧，
-由于本人第一次创建，有不足的地方还请指出
+__基于`nonebot-plugin-apscheduler`__
+让bot为你整点报时吧
 
 ## 💿 安装
 
@@ -79,3 +79,7 @@ end_time = 20
 - [x] 自定义播报时间  
 - [ ] 优化整点报时词库
 - [ ] 图片整点报时
+
+## ❤️ 鸣谢
+- [nonebot-plugin-apscheduler](https://github.com/nonebot/plugin-apscheduler)
+-  Python 聊天机器人框架[Nonebot2](https://github.com/nonebot/nonebot2)
