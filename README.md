@@ -15,7 +15,7 @@ _⭐基于Nonebot2的一款整点报时的插件⭐_
 </div>
 
 <div align="center">
-<a href="https://www.python.org/downloads/release/python-390/"><img src="https://img.shields.io/badge/python-3.8+-blue"></a>  <a href=""><img src="https://img.shields.io/badge/QQ-1141538825-yellow"></a> <a href="https://github.com/Cvandia/nonebot_plugin_nowtime/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue"></a> <a href="https://v2.nonebot.dev/"><img src="https://img.shields.io/badge/Nonebot2-rc1+-red"></a>
+<a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/python-3.10+-blue"></a>  <a href=""><img src="https://img.shields.io/badge/QQ-1141538825-yellow"></a> <a href="https://github.com/Cvandia/nonebot_plugin_nowtime/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue"></a> <a href="https://v2.nonebot.dev/"><img src="https://img.shields.io/badge/Nonebot2-2.2.0+-red"></a>
 </div>
 
 
@@ -68,7 +68,7 @@ uv build
 
 ## 🚀 自动测试与发布
 
-推送到 `main` 或向 `main` 提交 PR 时，GitHub Actions 会在 Python 3.9–3.13 上
+推送到 `main` 或向 `main` 提交 PR 时，GitHub Actions 会在 Python 3.10–3.13 上
 安装锁定依赖，执行 Ruff 检查、单元测试并构建发布包。
 
 发布沿用 game-torrent 的 PyPI Token 方式：
@@ -81,6 +81,8 @@ uv build
 标签触发后会先运行完整测试矩阵，全部通过且标签与版本一致时才上传到 PyPI。
 
 ## ⚙️ 配置
+
+运行环境要求 Python 3.10 及以上。
 
 在全局配置文件`.env`中添加如下
 ```

@@ -2,6 +2,8 @@
 
 ## 0.3.0
 
+- 最低 Python 版本提高至 3.10，约束 AnyIO 与 python-dotenv 至安全修复版本。
+
 - 使用 uv 管理依赖和构建，添加 pre-commit 与 GitHub Actions 测试、发布流程。
 - 使用 Alconna 解析中文命令，通过通用消息接口发送文字和语音。
 - 移除 OneBot 依赖，使用 uninfo 获取跨平台群主和管理员权限。
