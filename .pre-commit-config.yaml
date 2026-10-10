@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace  # 去除多余的空格
+      - id: end-of-file-fixer    # 确保文件以换行符结束
+      - id: check-yaml           # 检查 YAML 文件格式
+      - id: check-added-large-files  # 检查提交中是否包含过大的文件
+        exclude: ^uv\.lock$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format

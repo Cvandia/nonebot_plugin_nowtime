@@ -1,191 +1,34 @@
-from nonebot.plugin import on_regex, PluginMetadata
-from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
-from nonebot.permission import SUPERUSER
-from nonebot.params import RegexGroup
-from nonebot.matcher import Matcher
-from nonebot import require, get_bot, get_driver
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    MessageEvent,
-    MessageSegment,
-    GroupMessageEvent,
-    ActionFailed,
-)
-from nonebot.log import logger
-from typing import Dict, List, Optional, Tuple
-from httpx import AsyncClient
-from pathlib import Path
-from datetime import datetime
-from .config import Config
-import asyncio
-import aiofiles
-try:
-    import ujson as json
-except ModuleNotFoundError:
-    import json
+from nonebot import get_driver, get_plugin_config, require
+from nonebot.plugin import PluginMetadata
 
+from .config import Config
+
+require("nonebot_plugin_alconna")
+require("nonebot_plugin_localstore")
+require("nonebot_plugin_uninfo")
+require("nonebot_plugin_apscheduler")
 
 __plugin_meta__ = PluginMetadata(
     name="整点报时",
     description="每时每刻正点报时",
+    usage="现在时间 / 当前时间 / 北京时间\n查看整点报时列表\n开启整点报时 [群号]\n关闭整点报时 [群号]",
     config=Config,
-    usage='''现在时间\n
-        查看整点报时列表\n
-        开启整点报时\n
-        关闭整点报时''',
     type="application",
     homepage="https://github.com/Cvandia/nonebot_plugin_nowtime",
-    supported_adapters={"~onebot.v11"},
+    supported_adapters=(
+        require("nonebot_plugin_alconna").__plugin_meta__.supported_adapters
+        & require("nonebot_plugin_uninfo").__plugin_meta__.supported_adapters
+    ),
     extra={
         "unique_name": "nonebot-plugin-nowtime",
-        "example":
-        """
-        现在时间\n
-        查看整点报时列表\n
-        开启整点报时\n
-        关闭整点报时
-        """,
         "author": "divandia <106718176+Cvandia@users.noreply.github.com>",
-        "version": "0.1.5",
-    }
+        "version": "0.3.0",
+    },
 )
 
-config_path = Path("config/nowtime.json")
-config_path.parent.mkdir(parents=True, exist_ok=True)
-if config_path.exists():
-    with open(config_path, "r", encoding="utf8") as f:
-        CONFIG: Dict[str, List] = json.load(f)
-else:
-    CONFIG: Dict[str, List] = {"opened_groups": []}
-    with open(config_path, "w", encoding="utf8") as f:
-        json.dump(CONFIG, f, ensure_ascii=False, indent=4)
+plugin_config = get_plugin_config(Config)
 
-try:
-    scheduler = require("nonebot_plugin_apscheduler").scheduler
-except Exception:
-    scheduler = None
+from . import commands, scheduler  # noqa: E402, F401
+from .storage import group_store  # noqa: E402
 
-
-time_now = on_regex(r"(现在|当前|北京)时间", block=True, priority=5)
-trun_on_nowtime = on_regex(r"^(开启|关闭)整点报时([0-9]*)$", priority=99,
-                        block=True, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-list_matcher = on_regex(r"^查看整点报时列表$", priority=99,
-                        permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-
-
-@time_now.handle()
-async def _():
-    await time_now.send(message="正在查看当前时间……")
-    async with AsyncClient() as client:
-        get_json = await client.get('https://v.api.aa1.cn/api/time-tx/index.php', timeout=30)
-    get_msg = json.loads(get_json.text)
-    msg = (f"⭐{get_msg['msg']}⭐\n"
-        + f"\n现在是北京时间:\n{get_msg['nowtime']}"
-        + f"送你一句：\n⭐{get_msg['nxyj']}⭐"
-        )
-    await time_now.send(message=(msg))
-
-
-@list_matcher.handle()
-async def _(bot: Bot, event: MessageEvent, matcher: Matcher):
-    if not scheduler:
-        await matcher.finish("未安装软依赖nonebot_plugin_apscheduler，不能使用定时发送功能")
-    msg = "当前打开整点报时的群聊有：\n"
-    for group_id in CONFIG["opened_groups"]:
-        msg += f"{group_id}\n"
-    await matcher.finish(msg.strip())
-
-# 为群聊添加整点报时
-
-
-@trun_on_nowtime.handle()
-async def _(
-    bot: Bot,
-    event: MessageEvent,
-    matcher: Matcher,
-    args: Tuple[Optional[str], ...] = RegexGroup(),
-):
-    if not scheduler:
-        await matcher.finish("未安装软依赖nonebot_plugin_apscheduler，不能使用定时发送功能")
-    mode = args[0]
-    if isinstance(event, GroupMessageEvent):
-        group_id = args[1] if args[1] else str(event.group_id)
-    else:
-        if args[1]:
-            group_id = args[1]
-        else:
-            await matcher.finish("私聊开关需要输入指定群号")
-    if mode == "开启":
-        if group_id in CONFIG["opened_groups"]:
-            await matcher.finish("该群已经开启，无需重复开启")
-        else:
-            CONFIG["opened_groups"].append(group_id)
-    else:
-        if group_id in CONFIG["opened_groups"]:
-            CONFIG["opened_groups"].remove(group_id)
-        else:
-            await matcher.finish("该群尚未开启，无需关闭")
-    async with asyncio.Lock():
-        async with aiofiles.open(config_path, "w", encoding="utf8") as f:
-            await f.write(json.dumps(CONFIG, ensure_ascii=False, indent=4))
-    await matcher.finish(f"已成功{mode}{group_id}的整点报时")
-
-# 读取配置的开始和结束时间
-try:
-    star_time = get_driver().config.start_time
-    end_time = get_driver().config.end_time
-except Exception:
-    star_time = 0
-    end_time = 24
-# 发送报时
-
-
-async def post_scheduler():
-    bot: Bot = get_bot() #type: ignore
-    delay = 2 * 0.5
-    if datetime.now().hour in range(star_time, end_time):
-        for group_id in CONFIG["opened_groups"]:
-            try:
-                # 整点语音
-                url = 'https://v.api.aa1.cn/api/api-baoshi/data/baoshi/'
-                url = url + str(datetime.now().hour) + '.mp3'
-                record = MessageSegment.record(url, timeout=30)
-                await bot.send_group_msg(group_id=int(group_id), message=record) #type: ignore
-            except ActionFailed as e:
-                logger.warning(f'{repr(e)}')
-            await asyncio.sleep(delay)
-            try:
-                msg = await get_word_result()
-                await bot.send_group_msg(group_id=int(group_id), message=msg) #type: ignore
-            except ActionFailed as e:
-                logger.warning(
-                    f"定时发送整点报时到 {group_id} 失败，可能是风控或机器人不在该群聊 {repr(e)}")
-            await asyncio.sleep(delay)
-
-
-# 加载整点报时词库
-words_for_time:Dict[str,str] = json.load(
-    open(Path(__file__).parent / 'resource/time_words.json', 'r', encoding='utf-8'))
-
-# 匹配词库
-
-
-async def get_word_result():
-    """匹配词库"""
-    keys = words_for_time.keys()
-    for key in keys:
-        try:
-            if int(datetime.now().hour) == int(key):
-                return words_for_time[key]
-        except:
-            return '整点报时出错了！'
-
-
-# 添加定时任务
-try:
-    if scheduler:
-        scheduler.add_job(
-            post_scheduler, "cron", hour='*', id="everyday_nowtime"
-        )
-except ActionFailed as e:
-    logger.warning(f"定时任务添加失败，{repr(e)}")
+get_driver().on_startup(group_store.load)
